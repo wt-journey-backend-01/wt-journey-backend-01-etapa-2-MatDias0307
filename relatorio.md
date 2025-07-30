@@ -1,173 +1,135 @@
 <sup>Esse é um feedback gerado por IA, ele pode conter erros.</sup>
 
-Você tem 6 créditos restantes para usar o sistema de feedback AI.
+Você tem 5 créditos restantes para usar o sistema de feedback AI.
 
 # Feedback para MatDias0307:
 
-Nota final: **81.4/100**
+Nota final: **83.3/100**
 
-# Feedback para MatDias0307 🚔✨
+# Feedback para MatDias0307 🚓✨
 
-Olá, MatDias0307! Que jornada incrível você fez até aqui construindo essa API para o Departamento de Polícia! 🚀 Quero começar parabenizando você pela organização do seu projeto e pelo esforço em implementar uma API RESTful completa com Node.js e Express.js. 😄🎉
+Olá, MatDias0307! Primeiro, quero parabenizá-lo pelo empenho e pelo código que você enviou! 🎉 Você estruturou seu projeto muito bem, seguindo a arquitetura modular com rotas, controllers e repositories — isso é essencial para um projeto escalável e organizado. Além disso, você implementou corretamente os métodos HTTP principais para os recursos `/agentes` e `/casos`, e fez um ótimo trabalho com as validações e tratamento de erros básicos. Isso é um sinal claro de que você domina os fundamentos! 👏
 
----
-
-## 🎯 Pontos Fortes que Merecem Destaque
-
-- Seu código está muito bem modularizado, com rotas, controladores e repositórios separados — isso é fundamental para um projeto escalável e fácil de manter. 👏
-- Você implementou todos os métodos HTTP principais (GET, POST, PUT, PATCH, DELETE) tanto para agentes quanto para casos, o que mostra domínio das operações REST. Muito bom! 💪
-- As validações para os campos obrigatórios e formatos (como datas e strings) estão bem cuidadas, o que ajuda a garantir a integridade dos dados.
-- Você já fez um ótimo trabalho implementando filtros simples, como por status e agente, e também ordenação para agentes por data de incorporação — isso é um diferencial muito legal! 🚀
-- Também estão presentes mensagens de erro personalizadas em vários pontos, o que melhora a experiência do consumidor da API.
-- A estrutura do seu projeto está alinhada com o esperado, com os arquivos organizados em pastas `routes`, `controllers`, `repositories`, `docs` e `utils`. Isso é perfeito para um projeto Node.js seguindo arquitetura MVC! 📂👍
+Também quero destacar que você conseguiu implementar alguns bônus importantes, como a filtragem simples de casos por status e agente, o que mostra que você foi além do básico. Isso é muito legal e demonstra seu comprometimento em entregar uma API mais robusta. 🚀
 
 ---
 
-## 🔍 Onde Encontramos Oportunidades de Aprimoramento
+## Vamos analisar juntos os pontos que podem melhorar para deixar sua API ainda mais afiada! 🔍
 
-### 1. Validação e Atualização dos IDs nos Recursos (Penalidades Detectadas)
+### 1. Atualização (PUT/PATCH) de Agentes e Casos com Payloads Inválidos
 
-**O que eu vi:**  
-No seu código, percebi que nos métodos de atualização (PUT e PATCH) para agentes e no PUT para casos, você permite que o campo `id` seja alterado, o que não é recomendado. O ID deve ser imutável, pois é a chave única que identifica o recurso.
+Você já implementou as validações para os dados dos agentes e casos, o que é ótimo! Porém, percebi que alguns erros relacionados ao status code 400 (Bad Request) ao atualizar agentes e casos com payloads inválidos não estão sendo retornados corretamente em todos os cenários.
 
-Por exemplo, no `agentesController.js`, na função `updateAgente` e `patchAgente`, o código faz:
+Por exemplo, no seu `agentesController.js`, o método `updateAgente` chama a função `validateAgente` com o parâmetro `isUpdate = true`, que, segundo seu código, não valida os campos obrigatórios, apenas verifica os tipos e formatos. Isso pode permitir que um payload incompleto ou com campos errados passe sem erro, o que não é o comportamento esperado para um PUT (que deve atualizar todos os dados). O mesmo acontece no `patchAgente`, que usa `validateAgentePartial`, que é mais flexível, mas ainda assim, a validação pode não estar cobrindo todos os casos de payload mal formatado.
 
-```js
-const { id: _, ...dadosSemId } = agenteAtualizado;
-agentes[index] = { ...agentes[index], ...dadosSemId };
-```
-
-Mas isso só ocorre dentro do repositório, e no controlador você não bloqueia explicitamente o envio do campo `id` no payload. Isso pode permitir que o cliente tente alterar o ID, e seu código acaba ignorando, mas a validação não impede esse envio.
-
-**Por que isso é importante?**  
-Permitir alteração do ID pode causar inconsistência nos dados e problemas de referência, especialmente em APIs RESTful. O ideal é validar que o campo `id` não seja enviado no corpo da requisição para atualizações.
-
-**Como melhorar?**  
-Você pode adicionar uma validação explícita para rejeitar payloads que contenham o campo `id` nos métodos PUT e PATCH. Por exemplo, no controlador:
+**Exemplo do trecho atual:**
 
 ```js
-if ('id' in req.body) {
-    return res.status(400).json({
-        status: 400,
-        message: "O campo 'id' não pode ser alterado"
-    });
+function updateAgente(req, res) {
+    // ...
+    const errors = validateAgente(req.body, true);
+    if (errors.length > 0) {
+        return res.status(400).json({
+            status: 400,
+            message: "Parâmetros inválidos",
+            errors
+        });
+    }
+    // ...
 }
 ```
 
-Isso evita que o cliente tente mudar o identificador e deixa a API mais robusta.
+**O que pode estar acontecendo:**  
+Para o PUT, que substitui o recurso inteiro, você deveria validar que todos os campos obrigatórios estão presentes e corretos, não apenas validar parcialmente. O `validateAgente` com `isUpdate = true` está pulando essa validação completa.
 
-📚 Recomendo conferir este vídeo para reforçar conceitos de validação e tratamento de erros:  
-[Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
-
----
-
-### 2. Validação de Payloads em Atualizações Completas (PUT) e Parciais (PATCH)
-
-**O que eu vi:**  
-Alguns testes indicam que, ao tentar atualizar um agente ou um caso com payloads mal formatados, sua API não está retornando o status 400 como esperado.
-
-Analisando seu código, percebi que:
-
-- Na função `updateAgente` você chama `validateAgente(req.body, true)`, que não valida os campos obrigatórios, mas não verifica se o payload está vazio ou contém campos inválidos além do `id`.
-- Na função `patchAgente`, você chama `validateAgentePartial`, que verifica se o payload está vazio, mas não bloqueia campos proibidos (como `id`).
-- O mesmo acontece para os métodos de atualização dos casos (`updateCaso` e `patchCaso`).
-
-**Por que isso acontece?**  
-Seu validador para atualização completa (`validateAgente` com `isUpdate = true`) não está validando se o payload está vazio ou se contém campos inválidos, apenas alguns tipos. Isso pode permitir que um payload vazio ou com tipos errados passe sem erro 400.
-
-**Como melhorar?**  
-- Adicione uma verificação para garantir que o payload não esteja vazio no `updateAgente` e `updateCaso`.
-- Faça uma validação mais rigorosa para os tipos e campos permitidos.
-- Bloqueie explicitamente o campo `id` no payload (como sugerido acima).
-
-Exemplo para validar payload vazio:
+**Sugestão para corrigir:**  
+No caso do PUT, chame a validação completa (sem `isUpdate = true`), para garantir que todos os campos obrigatórios estejam presentes e válidos:
 
 ```js
-if (Object.keys(req.body).length === 0) {
-    return res.status(400).json({
-        status: 400,
-        message: "Payload não pode estar vazio"
-    });
-}
-```
-
-📚 Para entender melhor como validar dados e retornar erros adequados, veja:  
-[Status 400 - Bad Request - MDN](https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Status/400)  
-[Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)
-
----
-
-### 3. Validação do `agente_id` no Endpoint de Casos
-
-**O que eu vi:**  
-Quando você cria ou atualiza um caso, o campo `agente_id` deve ser um UUID válido e deve existir na lista de agentes.
-
-No seu `casosController.js`, você faz essa validação, mas notei que:
-
-- Na função `validateCaso`, você não valida se o `agente_id` é um UUID válido, apenas se é uma string.
-- A validação de UUID ocorre depois, no controlador, e se o ID for inválido, você retorna 400.
-- Porém, para casos em que o `agente_id` não existe, você retorna 404, o que está correto.
-
-**Por que isso é importante?**  
-Garantir que o `agente_id` seja válido e que o agente exista evita criar casos órfãos, que não fazem sentido sem um agente responsável.
-
-**Como melhorar?**  
-Você pode mover a validação do formato UUID para dentro do validador `validateCaso`, para centralizar a lógica de validação.
-
-Exemplo:
-
-```js
-const uuid = require('uuid');
-
-function validateCaso(caso, isUpdate = false) {
-    const errors = [];
-
-    if (!isUpdate) {
-        if (!caso.titulo) errors.push("O campo 'titulo' é obrigatório");
-        if (!caso.descricao) errors.push("O campo 'descricao' é obrigatório");
-        if (!caso.status) errors.push("O campo 'status' é obrigatório");
-        if (!caso.agente_id) errors.push("O campo 'agente_id' é obrigatório");
+function updateAgente(req, res) {
+    if (Object.keys(req.body).length === 0) {
+        return res.status(400).json({ status: 400, message: "Payload não pode estar vazio" });
+    }
+    if (req.body.id) {
+        return res.status(400).json({
+            status: 400,
+            message: "Parâmetros inválidos",
+            errors: ["O campo 'id' não pode ser alterado"]
+        });
     }
 
-    if (caso.agente_id && !uuid.validate(caso.agente_id)) {
-        errors.push("O campo 'agente_id' deve ser um UUID válido");
+    // Validação completa para PUT (todos os campos obrigatórios)
+    const errors = validateAgente(req.body, false); 
+    if (errors.length > 0) {
+        return res.status(400).json({
+            status: 400,
+            message: "Parâmetros inválidos",
+            errors
+        });
     }
 
-    // restante das validações...
-    return errors;
+    // resto do código...
 }
 ```
 
-📚 Para entender melhor UUIDs e validação, veja:  
-[Validação de dados em APIs Node.js/Express](https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_)  
-E para manipulação de requisições e validação de payloads:  
-[Manipulação de Requisições e Respostas com Express.js](https://youtu.be/--TQwiNIw28)
+Já para o PATCH, a validação parcial (como você fez) está correta, mas é importante garantir que, se o recurso não existir, retorne 404, o que você não faz no `patchAgente`. Você atualiza e retorna o resultado direto, sem checar se o agente existe antes.
+
+No `patchAgente`, acrescente essa checagem:
+
+```js
+function patchAgente(req, res) {
+    // ... validações do payload
+
+    const agenteExistente = agentesRepository.findById(req.params.id);
+    if (!agenteExistente) {
+        return res.status(404).json({ message: "Agente não encontrado" });
+    }
+
+    const agenteAtualizado = agentesRepository.update(req.params.id, req.body);
+    res.json(agenteAtualizado);
+}
+```
+
+O mesmo raciocínio vale para o `casosController.js` nos métodos `updateCaso` e `patchCaso`: o PUT deve validar todos os campos obrigatórios, e o PATCH deve verificar se o recurso existe antes de atualizar.
 
 ---
 
-### 4. Filtros e Busca Avançada (Bônus)
+### 2. Validação do `agente_id` ao Criar um Caso
 
-Você já implementou filtros por status e agente para casos, e ordenação para agentes por data de incorporação, o que é ótimo! 🎉
+Você fez um ótimo trabalho ao validar se o `agente_id` existe antes de criar um caso, retornando 404 se não existir. Isso é fundamental para manter a integridade dos dados.
 
-No entanto, percebi que:
+Porém, percebi que a validação do formato UUID para o `agente_id` está correta, mas a função `isValidUUID` está definida no `casosController.js` e usada em vários pontos, inclusive para validar query params. Ótimo!
 
-- A busca por palavra-chave (`q`) no endpoint `/casos` está implementada, mas o filtro para incluir dados completos do agente no retorno do caso (`includeAgente`) funciona só para GET `/casos/:id`, não para listagem.
-- A filtragem por data de incorporação para agentes com sorting (asc e desc) funciona parcialmente, mas não está completa para filtrar por data inicial e final (como um filtro complexo).
-- As mensagens de erro customizadas para parâmetros inválidos poderiam ser mais consistentes e detalhadas, especialmente para agentes.
-
-**Como aprimorar?**  
-- Para a busca por agente responsável no endpoint `/casos`, você pode implementar um filtro que retorne os casos já populados com os dados do agente, ou pelo menos um campo extra com os dados do agente para cada caso.
-- Para filtros complexos de agentes por data, pode implementar query params como `dataInicio` e `dataFim` e filtrar o array antes de ordenar.
-- Padronizar e detalhar as mensagens de erro para todos os parâmetros inválidos, para melhorar a UX da API.
-
-📚 Para entender melhor filtros e ordenação, recomendo:  
-[Manipulação de Arrays em JavaScript](https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI)
+Só tome cuidado para sempre validar o `agente_id` antes de tentar criar ou atualizar um caso, para evitar erros silenciosos.
 
 ---
 
-## 🗂️ Sobre a Estrutura do Projeto
+### 3. Filtragem e Busca de Casos e Agentes
 
-Sua estrutura está muito boa e organizada:
+Você implementou corretamente a filtragem simples por status e agente em `/casos`, parabéns! 🎯
+
+Porém, os filtros mais avançados, como:
+
+- Busca full-text no título e descrição dos casos (`q` query param)
+- Inclusão dos dados completos do agente responsável no retorno de um caso
+- Filtragem de agentes por data de incorporação com ordenação crescente e decrescente
+- Mensagens de erro customizadas para argumentos inválidos
+
+ainda não estão funcionando conforme esperado.
+
+**Por exemplo:**  
+No seu `casosController.js`, o filtro `q` está implementado, mas quando não encontra resultados, retorna 404, o que está correto. Porém, a filtragem por data de incorporação e ordenação em agentes não está implementada no controller, apenas no repository existe a função `sortByIncorporacao`.
+
+No `agentesController.js`, no método `getAllAgentes`, você implementou o filtro por cargo e ordenação por `dataDeIncorporacao` (asc e desc), mas não está retornando mensagens de erro customizadas para parâmetros inválidos de forma completa, o que pode estar causando falhas nos testes de erros customizados.
+
+**Dica:**  
+Verifique se todos os parâmetros query estão validados e, em caso de inválidos, retorne um JSON com `status`, `message` e `errors` detalhando o problema, como você fez em alguns pontos, mas de forma consistente em todos.
+
+---
+
+### 4. Organização e Estrutura do Projeto
+
+Sua estrutura está perfeita e segue exatamente o que era esperado! 👏
 
 ```
 .
@@ -180,44 +142,53 @@ Sua estrutura está muito boa e organizada:
 ├── routes/
 │   ├── agentesRoutes.js
 │   └── casosRoutes.js
-├── docs/
-│   └── swagger.js
+├── server.js
 ├── utils/
 │   └── errorHandler.js
-├── server.js
-├── package.json
+└── docs/
+    └── swagger.js
 ```
 
-Isso está exatamente como esperado e facilita a manutenção e escalabilidade do seu código. Excelente trabalho! 👏👏
-
-Se quiser entender mais sobre essa organização e arquitetura MVC, dê uma olhada neste vídeo:  
-[Arquitetura MVC em Node.js](https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH)
+Manter essa organização facilita a manutenção e escalabilidade do seu projeto. Continue assim! 🚀
 
 ---
 
-## 📝 Resumo dos Principais Pontos para Focar
+## Recursos para você aprimorar ainda mais sua API
 
-- 🚫 Bloquear alteração do campo `id` em PUT e PATCH para agentes e casos, retornando 400 se enviado.
-- ⚠️ Validar se o payload das requisições PUT e PATCH não está vazio e está no formato esperado, retornando 400 para payloads inválidos.
-- ✅ Centralizar validação do campo `agente_id` para garantir que seja um UUID válido e que o agente exista.
-- 🔍 Melhorar os filtros e buscas avançadas, especialmente para incluir dados do agente nos casos e filtrar agentes por data de incorporação com intervalo.
-- 💬 Padronizar e detalhar mensagens de erro para todos os parâmetros inválidos, garantindo respostas claras para o consumidor da API.
+- Para entender melhor como validar payloads completos para PUT e parciais para PATCH, recomendo este vídeo sobre **Validação de Dados em APIs Node.js/Express**:  
+  https://youtu.be/yNDCRAz7CM8?si=Lh5u3j27j_a4w3A_  
 
----
+- Para garantir que seus status codes estejam corretos e sua API siga os padrões REST, veja este vídeo explicativo sobre **HTTP e Express.js**:  
+  https://youtu.be/RSZHvQomeKE  
 
-## Finalizando...
+- Para aprofundar na manipulação de arrays e filtros em memória, que é o que seus repositories fazem, vale a pena revisar estes métodos do JavaScript:  
+  https://youtu.be/glSgUKA5LjE?si=t9G2NsC8InYAU9cI  
 
-MatDias0307, você está no caminho certo e já mostrou muita competência em construir uma API robusta e organizada! 🚓✨ Com alguns ajustes nas validações e no controle dos IDs, sua aplicação vai ficar ainda mais sólida e profissional.
-
-Continue explorando as boas práticas de validação, tratamento de erros e organização de código. Estou aqui torcendo pelo seu sucesso e aprendizado constante! 💙👊
-
-Se precisar, volte nos recursos que recomendei — eles vão te ajudar a consolidar esses conceitos!
-
-Até a próxima, e parabéns pelo esforço e dedicação! 🚀🙌
+- Para entender melhor a arquitetura MVC e como organizar seus arquivos, este vídeo é excelente:  
+  https://youtu.be/bGN_xNc4A1k?si=Nj38J_8RpgsdQ-QH  
 
 ---
 
-Um abraço do seu Code Buddy! 🤖💬
+## Resumo dos principais pontos para focar:
+
+- 🔍 **Validação completa no PUT:** Garanta que o método PUT valide todos os campos obrigatórios e tipos, e retorne 400 para payloads inválidos.  
+- 🔍 **Checagem de existência no PATCH:** Antes de atualizar parcialmente, verifique se o recurso existe e retorne 404 caso contrário.  
+- 🔍 **Mensagens de erro customizadas:** Consistência nas respostas de erro para parâmetros inválidos em query params e payloads.  
+- 🔍 **Filtros avançados:** Implemente e teste filtros como busca full-text e ordenação por data de incorporação para agentes.  
+- ✅ **Manter a estrutura modular:** Seu projeto está muito bem organizado, continue assim!  
+
+---
+
+MatDias0307, você está no caminho certo e já tem uma base sólida! Continue investindo nas validações e no tratamento de erros, pois isso faz toda a diferença para uma API profissional e confiável. Qualquer dúvida, estou aqui para ajudar! 💪✨
+
+Boa sorte e continue codando com paixão! 🚓👨‍💻👩‍💻
+
+---
+
+Se quiser revisar conceitos básicos e avançados de Express.js e APIs REST, aqui está um recurso que pode ajudar bastante:  
+https://youtu.be/RSZHvQomeKE (Fundamentos de API REST e Express.js)
+
+Até a próxima! 👋😊
 
 > Caso queira tirar uma dúvida específica, entre em contato com o Chapter no nosso [discord](https://discord.gg/DryuHVnz).
 
