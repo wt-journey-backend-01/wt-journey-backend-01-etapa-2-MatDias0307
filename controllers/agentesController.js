@@ -69,17 +69,21 @@ function validateAgentePartial(agente) {
 function getAllAgentes(req, res) {
     try {
         const { cargo, sort } = req.query;
-        
-        let agentes;
+        let agentes = agentesRepository.findAll();
+
         if (cargo) {
-            agentes = agentesRepository.findByCargo(cargo);
-        } else if (sort) {
-            const order = sort.startsWith('-') ? 'desc' : 'asc';
-            agentes = agentesRepository.sortByIncorporacao(order);
-        } else {
-            agentes = agentesRepository.findAll();
+            agentes = agentes.filter(agente => agente.cargo.toLowerCase() === cargo.toLowerCase());
         }
-        
+
+        if (sort) {
+            const order = sort.startsWith('-') ? 'desc' : 'asc';
+            agentes = agentes.sort((a, b) => {
+                const dateA = new Date(a.dataDeIncorporacao);
+                const dateB = new Date(b.dataDeIncorporacao);
+                return order === 'asc' ? dateA - dateB : dateB - dateA;
+            });
+        }
+
         res.json(agentes);
     } catch (error) {
         res.status(500).json({ message: error.message });

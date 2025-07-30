@@ -58,9 +58,10 @@ router.get('/', casosController.getAllCasos);
  *         required: true
  *         description: ID do caso
  *       - in: query
- *         name: agente_id
+ *         name: includeAgente
  *         schema:
- *           type: string
+ *           type: boolean
+ *           default: false
  *         description: Inclui dados completos do agente responsável
  *     responses:
  *       200:

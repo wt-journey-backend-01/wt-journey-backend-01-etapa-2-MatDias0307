@@ -129,35 +129,6 @@ function createCaso(req, res) {
     }
 }
 
-function updateCaso(req, res) {
-    try {
-        const errors = validateCaso(req.body, true);
-        if (errors.length > 0) {
-            return res.status(400).json({ 
-                status: 400,
-                message: "Parâmetros inválidos",
-                errors
-            });
-        }
-
-        if (req.body.agente_id) {
-            const agenteExiste = agentesRepository.findById(req.body.agente_id);
-            if (!agenteExiste) {
-                return res.status(404).json({ message: "Agente não encontrado para o agente_id fornecido" });
-            }
-        }
-
-        const casoAtualizado = casosRepository.update(req.params.id, req.body);
-        if (casoAtualizado) {
-            res.json(casoAtualizado);
-        } else {
-            res.status(404).json({ message: "Caso não encontrado" });
-        }
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
-
 function patchCaso(req, res) {
     try {
         const casoExistente = casosRepository.findById(req.params.id);

@@ -28,7 +28,7 @@ function findById(id) {
 function create(caso) {
     const { id: _, ...dados } = caso;
     const novoCaso = { id: uuidv4(), ...dados };
-    agentes.push(novoCaso);
+    casos.push(novoCaso);
     return novoCaso;
 }
 
