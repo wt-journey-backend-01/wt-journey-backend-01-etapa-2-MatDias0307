@@ -105,7 +105,6 @@ function getCasoById(req, res) {
     }
 }
 
-
 function createCaso(req, res) {
     try {
         const errors = validateCaso(req.body);
@@ -220,6 +219,20 @@ function updateCaso(req, res) {
         } else {
             res.status(404).json({ message: "Caso não encontrado" });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+function deleteCaso(req, res) {
+    try {
+        const casoExistente = casosRepository.findById(req.params.id);
+        if (!casoExistente) {
+            return res.status(404).json({ message: "Caso não encontrado" });
+        }
+
+        casosRepository.remove(req.params.id);
+        res.status(204).end();
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

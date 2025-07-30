@@ -16,7 +16,6 @@ function validateAgente(agente, isUpdate = false) {
         } else {
             const data = new Date(agente.dataDeIncorporacao);
             const hoje = new Date();
-            // Zera horas para comparar só a data
             hoje.setHours(0,0,0,0);
             if (data > hoje) {
                 errors.push("O campo 'dataDeIncorporacao' não pode ser uma data futura");
@@ -49,7 +48,6 @@ function validateAgentePartial(agente) {
         } else {
             const data = new Date(agente.dataDeIncorporacao);
             const hoje = new Date();
-            // Zera horas para comparar só a data
             hoje.setHours(0,0,0,0);
             if (data > hoje) {
                 errors.push("O campo 'dataDeIncorporacao' não pode ser uma data futura");
@@ -67,7 +65,6 @@ function validateAgentePartial(agente) {
 
     return errors;
 }
-
 
 function getAllAgentes(req, res) {
     try {
