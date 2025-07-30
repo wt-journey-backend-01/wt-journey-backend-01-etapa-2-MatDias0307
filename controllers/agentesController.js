@@ -149,6 +149,21 @@ function createAgente(req, res) {
 
 function updateAgente(req, res) {
     try {
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({
+                status: 400,
+                message: "Payload não pode estar vazio"
+            });
+        }
+
+        if (req.body.id) {
+            return res.status(400).json({
+                status: 400,
+                message: "Parâmetros inválidos",
+                errors: ["O campo 'id' não pode ser alterado"]
+            });
+        }
+
         const errors = validateAgente(req.body, true);
         if (errors.length > 0) {
             return res.status(400).json({
@@ -171,9 +186,19 @@ function updateAgente(req, res) {
 
 function patchAgente(req, res) {
     try {
-        const agenteExistente = agentesRepository.findById(req.params.id);
-        if (!agenteExistente) {
-            return res.status(404).json({ message: "Agente não encontrado" });
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({
+                status: 400,
+                message: "Payload não pode estar vazio"
+            });
+        }
+
+        if (req.body.id) {
+            return res.status(400).json({
+                status: 400,
+                message: "Parâmetros inválidos",
+                errors: ["O campo 'id' não pode ser alterado"]
+            });
         }
 
         const errors = validateAgentePartial(req.body);

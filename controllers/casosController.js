@@ -11,6 +11,10 @@ function validateCaso(caso, isUpdate = false) {
         if (!caso.agente_id) errors.push("O campo 'agente_id' é obrigatório");
     }
 
+    if (caso.agente_id && !isValidUUID(caso.agente_id)) {
+        errors.push("O campo 'agente_id' deve ser um UUID válido");
+    }
+
     if (caso.status && !['aberto', 'solucionado'].includes(caso.status)) {
         errors.push("O campo 'status' pode ser somente 'aberto' ou 'solucionado'");
     }
@@ -18,13 +22,8 @@ function validateCaso(caso, isUpdate = false) {
     if (caso.titulo && typeof caso.titulo !== "string") {
         errors.push("O campo 'titulo' deve ser uma string");
     }
-
     if (caso.descricao && typeof caso.descricao !== "string") {
         errors.push("O campo 'descricao' deve ser uma string");
-    }
-
-    if (caso.agente_id && typeof caso.agente_id !== "string") {
-        errors.push("O campo 'agente_id' deve ser uma string");
     }
 
     return errors;
@@ -147,53 +146,23 @@ function createCaso(req, res) {
             });
         }
 
-        if (!isValidUUID(req.body.agente_id)) {
-            return res.status(400).json({
-                status: 400,
-                message: "Parâmetros inválidos",
-                errors: ["O campo 'agente_id' deve ser um UUID válido"]
-            });
-        }
-
         const agenteExiste = agentesRepository.findById(req.body.agente_id);
         if (!agenteExiste) {
-            return res.status(404).json({ message: "Agente não encontrado para o agente_id fornecido" });
+            return res.status(404).json({
+                status: 404,
+                message: "Agente não encontrado",
+                errors: ["O agente_id fornecido não existe"]
+            });
         }
 
         const novoCaso = casosRepository.create(req.body);
         res.status(201).json(novoCaso);
     } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
-
-function patchCaso(req, res) {
-    try {
-        const casoExistente = casosRepository.findById(req.params.id);
-        if (!casoExistente) {
-            return res.status(404).json({ message: "Caso não encontrado" });
-        }
-
-        const errors = validateCasoPartial(req.body);
-        if (errors.length > 0) {
-            return res.status(400).json({ 
-                status: 400,
-                message: "Parâmetros inválidos",
-                errors
-            });
-        }
-
-        if (req.body.agente_id) {
-            const agenteExiste = agentesRepository.findById(req.body.agente_id);
-            if (!agenteExiste) {
-                return res.status(404).json({ message: "Agente não encontrado para o agente_id fornecido" });
-            }
-        }
-
-        const casoAtualizado = casosRepository.update(req.params.id, req.body);
-        res.json(casoAtualizado);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
+        res.status(500).json({ 
+            status: 500,
+            message: "Erro ao criar caso",
+            error: error.message 
+        });
     }
 }
 
@@ -206,6 +175,14 @@ function updateCaso(req, res) {
             });
         }
 
+        if (req.body.id) {
+            return res.status(400).json({
+                status: 400,
+                message: "Parâmetros inválidos",
+                errors: ["O campo 'id' não pode ser alterado"]
+            });
+        }
+
         const errors = validateCaso(req.body, true);
         if (errors.length > 0) {
             return res.status(400).json({
@@ -215,19 +192,45 @@ function updateCaso(req, res) {
             });
         }
 
-        if (req.body.agente_id) {
-            const agenteExiste = agentesRepository.findById(req.body.agente_id);
-            if (!agenteExiste) {
-                return res.status(404).json({ message: "Agente não encontrado para o agente_id fornecido" });
-            }
-        }
-
         const casoAtualizado = casosRepository.update(req.params.id, req.body);
         if (casoAtualizado) {
             res.json(casoAtualizado);
         } else {
             res.status(404).json({ message: "Caso não encontrado" });
         }
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+function patchCaso(req, res) {
+    try {
+        if (Object.keys(req.body).length === 0) {
+            return res.status(400).json({
+                status: 400,
+                message: "Payload não pode estar vazio"
+            });
+        }
+
+        if (req.body.id) {
+            return res.status(400).json({
+                status: 400,
+                message: "Parâmetros inválidos",
+                errors: ["O campo 'id' não pode ser alterado"]
+            });
+        }
+
+        const errors = validateCasoPartial(req.body);
+        if (errors.length > 0) {
+            return res.status(400).json({
+                status: 400,
+                message: "Parâmetros inválidos",
+                errors
+            });
+        }
+
+        const casoAtualizado = casosRepository.update(req.params.id, req.body);
+        res.json(casoAtualizado);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
