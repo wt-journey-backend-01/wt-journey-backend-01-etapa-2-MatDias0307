@@ -24,7 +24,8 @@ function findById(id) {
 }
 
 function create(agente) {
-    const novoAgente = { id: uuidv4(), ...agente };
+    const { id: _, ...dados } = agente;
+    const novoAgente = { id: uuidv4(), ...dados };
     agentes.push(novoAgente);
     return novoAgente;
 }
@@ -32,7 +33,8 @@ function create(agente) {
 function update(id, agenteAtualizado) {
     const index = agentes.findIndex(agente => agente.id === id);
     if (index !== -1) {
-        agentes[index] = { ...agentes[index], ...agenteAtualizado };
+        const { id: _, ...dadosSemId } = agenteAtualizado;
+        agentes[index] = { ...agentes[index], ...dadosSemId };
         return agentes[index];
     }
     return null;

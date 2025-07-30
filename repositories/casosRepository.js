@@ -26,15 +26,17 @@ function findById(id) {
 }
 
 function create(caso) {
-    const novoCaso = { id: uuidv4(), ...caso };
-    casos.push(novoCaso);
+    const { id: _, ...dados } = caso;
+    const novoCaso = { id: uuidv4(), ...dados };
+    agentes.push(novoCaso);
     return novoCaso;
 }
 
 function update(id, casoAtualizado) {
     const index = casos.findIndex(caso => caso.id === id);
     if (index !== -1) {
-        casos[index] = { ...casos[index], ...casoAtualizado };
+        const { id: _, ...dadosSemId } = casoAtualizado;
+        casos[index] = { ...casos[index], ...dadosSemId };
         return casos[index];
     }
     return null;
