@@ -44,12 +44,12 @@ function remove(id) {
     agentes = agentes.filter(agente => agente.id !== id);
 }
 
-function findByCargo(cargo) {
-    return agentes.filter(agente => agente.cargo.toLowerCase() === cargo.toLowerCase());
+function findByCargo(cargo, agentesList = agentes) {
+    return agentesList.filter(agente => agente.cargo.toLowerCase() === cargo.toLowerCase());
 }
 
-function sortByIncorporacao(order = 'asc') {
-    return [...agentes].sort((a, b) => {
+function sortByIncorporacao(order = 'asc', agentesList = agentes) {
+    return [...agentesList].sort((a, b) => {
         const dateA = new Date(a.dataDeIncorporacao);
         const dateB = new Date(b.dataDeIncorporacao);
         return order === 'asc' ? dateA - dateB : dateB - dateA;

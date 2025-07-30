@@ -9,7 +9,7 @@ let casos = [
         agente_id: "401bccf5-cf9e-489d-8412-446cd169a0f1" 
     },
     {
-        id: "a1b2c3d4-e5f6-7g8h-9i0j-k1l2m3n4o5p6",
+        id: "9c4d6a8b-3e2f-4a7c-9d1b-0f5e8d3c2a1b",
         titulo: "roubo a banco",
         descricao: "Assaltantes heavily armed roubaram o banco central na manhã de segunda-feira.",
         status: "solucionado",
@@ -46,17 +46,17 @@ function remove(id) {
     casos = casos.filter(caso => caso.id !== id);
 }
 
-function findByAgenteId(agente_id) {
-    return casos.filter(caso => caso.agente_id === agente_id);
+function findByAgenteId(agente_id, casosList = casos) {
+    return casosList.filter(caso => caso.agente_id === agente_id);
 }
 
-function findByStatus(status) {
-    return casos.filter(caso => caso.status.toLowerCase() === status.toLowerCase());
+function findByStatus(status, casosList = casos) {
+    return casosList.filter(caso => caso.status.toLowerCase() === status.toLowerCase());
 }
 
-function searchByText(query) {
+function searchByText(query, casosList = casos) {
     const lowerQuery = query.toLowerCase();
-    return casos.filter(caso => 
+    return casosList.filter(caso => 
         caso.titulo.toLowerCase().includes(lowerQuery) || 
         caso.descricao.toLowerCase().includes(lowerQuery)
     );
