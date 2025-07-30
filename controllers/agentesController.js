@@ -164,7 +164,7 @@ function updateAgente(req, res) {
             });
         }
 
-        const errors = validateAgente(req.body, true);
+        const errors = validateAgente(req.body, false);
         if (errors.length > 0) {
             return res.status(400).json({
                 status: 400,
@@ -199,6 +199,11 @@ function patchAgente(req, res) {
                 message: "Parâmetros inválidos",
                 errors: ["O campo 'id' não pode ser alterado"]
             });
+        }
+
+        const agenteExistente = agentesRepository.findById(req.params.id);
+        if (!agenteExistente) {
+            return res.status(404).json({ message: "Agente não encontrado" });
         }
 
         const errors = validateAgentePartial(req.body);

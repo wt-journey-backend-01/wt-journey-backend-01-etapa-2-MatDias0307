@@ -183,13 +183,22 @@ function updateCaso(req, res) {
             });
         }
 
-        const errors = validateCaso(req.body, true);
+        const errors = validateCaso(req.body, false);
         if (errors.length > 0) {
             return res.status(400).json({
                 status: 400,
                 message: "Parâmetros inválidos",
                 errors
             });
+        }
+
+        if (req.body.agente_id) {
+            if (!agentesRepository.findById(req.body.agente_id)) {
+                return res.status(404).json({
+                    status: 404,
+                    message: "Agente não encontrado"
+                });
+            }
         }
 
         const casoAtualizado = casosRepository.update(req.params.id, req.body);
